@@ -13,7 +13,7 @@ process AFTERQC {
     tag {"TRIMMED-Data FASTQC on $sample_id"}
     label 'process_low'
     
-    publishDir "$projectDir/afterqc" ,  mode:'copy'
+    publishDir params.qcdir ,  mode:'copy'
     
 
     input:

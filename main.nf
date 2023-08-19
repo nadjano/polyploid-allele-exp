@@ -4,41 +4,20 @@
 Title : Nextflow workflow on variant analysis
 =================================================================================================
 
-
 Author : Dr. Majeed Jamakhani
 =================================================================================================
 */
 
-// This is the main workflow
-
 
 /*
 =================================================================================================
-Pipeline Input parameters
+Input Directories
 =================================================================================================
 
 */
 
-params.reads = "$projectDir/data/*_{1,2}.fq"
-params.genome = "$projectDir/genome/genome.fa"
-params.known_sites = "$projectDir/known/known_dbsnp138.vcf"
-params.adapter_file = "$projectDir/adapter/adapter.fa"
-
-params.trimmed_reads = "$projectDir/trimmed/*_trimmed_{1,2}.fq"
-
-/*
-=================================================================================================
-Input Channels
-=================================================================================================
-
-*/
-
-read_pairs_ch = Channel.fromFilePairs(params.reads, checkIfExists: true)
-read_pairs_ch2 = Channel.fromFilePairs(params.reads, checkIfExists: true)
-genome_ch = Channel.fromPath(params.genome, checkIfExists: true)
-adapter_ch = Channel.fromPath(params.adapter_file, checkIfExists: true)
-
-
+params.reads = "s3://mj-nextflow-aws-bucket/data/ggal/*_{1,2}.fq"
+params.genome = "s3://mj-nextflow-aws-bucket/genome/transcriptome.fa"
 
 
 /*
@@ -48,21 +27,25 @@ Ouput Directories
 
 */
 
-params.multiqc = "$projectDir/multiqc"
-params.outdir = "$projectDir/results"
-params.genomedir = "$projectDir/genome"
-params.qcdir = "$projectDir/QC"
+params.trimmed = "s3://mj-nextflow-aws-bucket/results/trimmed"
+
+params.multiqc = "s3://mj-nextflow-aws-bucket/results/multiqc"
+params.outdir = "s3://mj-nextflow-aws-bucket/results"
+
+params.qcdir = "s3://mj-nextflow-aws-bucket/results/QC"
+
 
 
 /*
 =================================================================================================
-Ouput Channels
+Channels
 =================================================================================================
 
 */
 
-
-
+read_pairs_ch = Channel.fromFilePairs(params.reads, checkIfExists: true)
+read_pairs_ch2 = Channel.fromFilePairs(params.reads, checkIfExists: true)
+genome_ch = Channel.fromPath(params.genome, checkIfExists: true)
 
 
 
@@ -72,7 +55,6 @@ Include Modules
 =================================================================================================
 */
 include {BEFOREQC} from "./modules/beforeqc"
-include {TRIMMOMATIC} from "./modules/trimmomatic"
 include {SICKLE} from "./modules/sickle"
 include {AFTERQC} from "./modules/afterqc"
 include {MULTIQC} from "./modules/multiqc"

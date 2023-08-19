@@ -13,7 +13,7 @@ process BEFOREQC {
     tag {"Raw-Data FASTQC on $sample_id"}
     label 'process_low'
     
-    publishDir "$projectDir/beforeqc" ,  mode:'copy'
+    publishDir params.qcdir ,  mode:'copy'
     
 
     input:

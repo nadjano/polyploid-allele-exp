@@ -13,7 +13,7 @@ process SICKLE {
     label 'process_low'
     
 
-    publishDir "$projectDir/trimmed", mode: 'copy'
+    publishDir params.trimmed , mode: 'copy'
 
     input: 
     tuple val(sample_id), path(reads)
