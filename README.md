@@ -13,7 +13,7 @@ First we have to setup aws account as explained in setup.md file present in setu
 
 **Step2: Create nextflow scripts :**
 
-According to our need we have to write nectflow scripts . 
+According to our need we have to write nextflow scripts . 
 I have splitted nextflow scripts according to my wish as below :
 
 **step3: nextflow.config :**
