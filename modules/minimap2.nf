@@ -17,7 +17,7 @@ process MINIMAP2 {
     tag {"Minimap on $sample_id"}
     label 'process_minimap2'
     
-    publishDir params.aligned,  mode:'link'
+    publishDir params.aligned
     
     input:
     tuple val(experiment),
@@ -44,9 +44,10 @@ process MINIMAP2 {
             minimap2 \
                         -t ${task.cpus} \
                         -c \
-                        -K 50g \
+                        -K 25g \
                         -x splice \
                         -uf \
+                        --for-only \
                         --secondary=yes \
                         ${mm_parameters} \
                         --paf-no-hit \
@@ -65,9 +66,10 @@ process MINIMAP2 {
         minimap2 \
                     -t ${task.cpus} \
                     -c \
-                    -K 50g \
+                    -K 25g \
                     -x splice \
                     -uf \
+                    --for-only \
                     --secondary=yes \
                     ${mm_parameters} \
                     --paf-no-hit \

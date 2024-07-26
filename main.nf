@@ -28,16 +28,16 @@ Ouput Directories
 
 */
 
-params.aligned = "${baseDir}/out/aligned"
-params.paf_compare = "${baseDir}/out/paf_compare"
-params.blast_out = "${baseDir}/out/blast_out"
-params.multimappers = "${baseDir}/out/mapping_comparison_mm_blast"
-params.plot = "${baseDir}/out/scatter_plots"
-params.barplot = "${baseDir}/out/bar_plots"
-params.stats = "${baseDir}/out/mapping_stats"
-params.length_plot = "${baseDir}/out/length_bias"
-params.tsv_out = "${baseDir}/out/paf_tsv_files"
-params.cat_plot = "${baseDir}/out/cat_plot"
+params.aligned = "${baseDir}/out_ms/aligned"
+params.paf_compare = "${baseDir}/out_ms/paf_compare"
+params.blast_out = "${baseDir}/out_ms/blast_out"
+params.multimappers = "${baseDir}/out_ms/mapping_comparison_mm_blast"
+params.plot = "${baseDir}/out_ms/scatter_plots"
+params.barplot = "${baseDir}/out_ms/bar_plots"
+params.stats = "${baseDir}/out_ms/mapping_stats"
+params.length_plot = "${baseDir}/out_ms/length_bias"
+params.tsv_out = "${baseDir}/out_ms/paf_tsv_files"
+
 /*
 =================================================================================================
 Channels
@@ -107,7 +107,7 @@ include {BLAST_DB; BLASTN} from "./modules/blastn"
 include {MULTIMAPPERS} from "./modules/multimappers"
 include {CONCAT} from "./modules/concat_samples_for_experiment"
 include {LENGTHBIAS} from "./modules/lengthbias"
-include {CAT_BARPLOT} from "./modules/barplot_cats"
+
 
 /*
 =================================================================================================
@@ -118,6 +118,7 @@ include {CAT_BARPLOT} from "./modules/barplot_cats"
 
 workflow {
    mm_paramers = Channel.from("-N 200", "-P")
+   //mm_paramers = Channel.from("-N 200")
    minimap_out = MINIMAP2(samples_mapping_ch.combine(mm_paramers))
    minimap_out.transpose().view()
    // get mapping stats
@@ -144,8 +145,7 @@ workflow {
     PLOT(minimap_out_grouped)
     // plot barplot for ASE count distribution
     BARPLOT(minimap_out_grouped)
-    // plot mapping categories
-    CAT_BARPLOT(minimap_out_grouped)
+
     // Filter channel for experiment == Orangutan and Atlantic
     minimap_out_grouped_length = minimap_out_grouped.join(Channel.of("Orangutan", "Atlantic"))
 

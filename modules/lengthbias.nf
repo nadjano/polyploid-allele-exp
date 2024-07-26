@@ -12,12 +12,12 @@ process LENGTHBIAS {
     tag {"Identify length bias between hapl0types $experiment $sample_id"}
     label 'process_mem'
   
-    publishDir params.length_plot,  mode:'copy'
+    publishDir params.length_plot,  mode:'link'
     
     input:
     tuple  val(experiment), val( sample_id ), val( strategies ), path( paf ), val(mm_parameters)
     output:    
-    tuple  val(experiment), val( sample_id ), val('*pdf')
+    tuple  val(experiment), val( sample_id ), path('*pdf')
     script:
     def mm_parameters = mm_parameters.replace(' ', '').replace('-', '')
     """

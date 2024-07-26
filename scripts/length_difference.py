@@ -8,13 +8,17 @@ import gffutils
 
 pd.options.mode.chained_assignment = None
 
-sns.set_theme(style='whitegrid', rc={
-    'figure.figsize': (6.4, 6.4),  # figure size in inches
-    'axes.labelsize': 14,           # font size of the x and y labels
-    'xtick.labelsize': 12,          # font size of the tick labels
-    'ytick.labelsize': 12,          # font size of the tick labels
-    'legend.fontsize': 12,          # font size of the legend
-})
+sns.set_theme(style='ticks', rc={
+    'figure.figsize': (8, 4),  # figure size in inches
+    'axes.labelsize': 16,           # font size of the x and y labels
+    'xtick.labelsize': 16,          # font size of the tick labels
+    'ytick.labelsize': 16,          # font size of the tick labels
+    'legend.fontsize': 16,          # font size of the legend
+    "axes.spines.right": False, 
+    "axes.spines.top": False})
+
+
+  # set the resolution to 300 DPI
 
   # set the resolution to 300 DPI
 
@@ -30,7 +34,7 @@ def parse_line(line):
     for field in fields[12:]:
         if field.startswith('NM'):
             NM_score = field.split(':')[2]
-        if field.startswith('AS'):
+        if field.startswith('ms'):
             AS_score = field.split(':')[2]
             break
     return read_id, read_length, ref_length, mapping_location, mapq, AS_score, NM_score
@@ -121,8 +125,8 @@ def get_haplotype_with_longest_annotation(row):
 
 def add_longest_transcript(df, output_prefix):
     if 'Atlantic' in output_prefix:
-        df['haplotype_with_longest_annotation'] = df[['ref_length_1G', 'ref_length_2G', 'ref_length_3G', 'ref_length_4G']].idxmax(axis=1)
-        mask = (df[['ref_length_1G', 'ref_length_2G', 'ref_length_3G', 'ref_length_4G']].nunique(axis=1) == 1)
+        df['haplotype_with_longest_annotation'] = df[['ref_length_haplotype1', 'ref_length_haplotype2', 'ref_length_haplotype3', 'ref_length_haplotype4']].idxmax(axis=1)
+        mask = (df[['ref_length_haplotype1', 'ref_length_haplotype2', 'ref_length_haplotype3', 'ref_length_haplotype4']].nunique(axis=1) == 1)
         df.loc[mask, 'haplotype_with_longest_annotation'] = 'equal_lengths'
     if 'Orang' in output_prefix:
         df['haplotype_with_longest_annotation'] = df.apply(get_haplotype_with_longest_annotation, axis=1)
@@ -135,7 +139,7 @@ def add_length_category(df, output_prefix):
     # Select only the relevant columns
     print(df)
     if 'Atlantic' in output_prefix:
-        df_subset = df[['ref_length_1G', 'ref_length_2G', 'ref_length_3G', 'ref_length_4G']]
+        df_subset = df[['ref_length_haplotype1', 'ref_length_haplotype2', 'ref_length_haplotype3', 'ref_length_haplotype4']]
     if 'Orang' in output_prefix:
         df_subset = df[['ref_length_hap1', 'ref_length_hap2']]
     df_subset = df_subset.astype(int)
@@ -182,6 +186,7 @@ def add_haplotype_info(df, output_prefix):
     if 'Atlantic' in output_prefix:
         pattern = r'(\dG)'
         df['haplotype'] = df['mapping_location'].str.extract(pattern)
+        df['haplotype'] = df['haplotype'].replace({'0G': 'unphased', '1G': 'haplotype1', '2G': 'haplotype2', '3G': 'haplotype3', '4G': 'haplotype4'})
         print(df['haplotype'])
     if 'Orang' in output_prefix:
         df['haplotype'] = df['mapping_location'].str.split('_').str[0]
@@ -297,7 +302,7 @@ def pivot_genes(df):
 
 def box_plot(df, output_prefix):
     # Create a scatter plot of 'prop_ASE_read_G1' vs 'prop_ASE_read_G2'
-    plt.figure(figsize=(10, 10))
+    #plt.figure(figsize=(10, 10))
     ax = sns.boxplot(data=df, x="length_category", y='count_proportion', hue='mapping_category')
 
     # Add number of observations
@@ -313,21 +318,21 @@ def box_plot(df, output_prefix):
     plt.close()
 
 def boxplot1(df, output_prefix):
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(4, 4))
     # Make a boxplot
     ax1 = sns.boxplot(data=df, x="haplotype_with_longest_annotation", y='count_proportion', hue='mapping_category')
 
     # Add number of observations
-    for i in range(len(df['haplotype_with_longest_annotation'].unique())):
-        nobs = df['haplotype_with_longest_annotation'].value_counts().values[i]
-        ax1.text(i, 1.2, f"N: {nobs}", horizontalalignment='center', size='large', color='black', weight='semibold')
+    # for i in range(len(df['haplotype_with_longest_annotation'].unique())):
+    #     nobs = df['haplotype_with_longest_annotation'].value_counts().values[i]
+    #     ax1.text(i, 1.2, f"N: {nobs}", horizontalalignment='center', size='large', color='black', weight='semibold')
     # turn x labels
     plt.xticks(rotation=90)
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.tight_layout()
 
 
-    plt.savefig(f'{output_prefix}_boxplot2.pdf', dpi=300)
+    plt.savefig(f'{output_prefix}_boxplot2.pdf', dpi=300, bbox_inches='tight', transparent=True)
     plt.close()
 
 def get_gff_file(output_prefix):
@@ -383,9 +388,8 @@ def main(paf, output_prefix):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process two PAF files.')
-    parser.add_argument('--paf', type=str, help='Path to the first seperate PAF file')
+    parser.add_argument('--paf', type=str, help='Path to the PAF file')
     parser.add_argument('--output_prefix', type=str, help='Prefix output file')
     args = parser.parse_args()
     main(args.paf,  args.output_prefix)
-
 

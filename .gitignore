@@ -1,0 +1,13 @@
+
+out
+.nextflow.log
+.nextflow.log.*
+gff.db
+work
+hap_genomes
+fastq_reads
+.nextflow
+out_ms
+*pdf
+*tsv
+*csv

@@ -8,13 +8,14 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 pd.options.mode.chained_assignment = None
 
-sns.set_theme(style='whitegrid', rc={
-    'figure.figsize': (6.4, 6.4),  # figure size in inches
+sns.set_theme(style='ticks', rc={
+    'figure.figsize': (3, 3),  # figure size in inches
     'axes.labelsize': 14,           # font size of the x and y labels
-    'xtick.labelsize': 12,          # font size of the tick labels
-    'ytick.labelsize': 12,          # font size of the tick labels
-    'legend.fontsize': 12,          # font size of the legend
-})
+    'xtick.labelsize': 14,          # font size of the tick labels
+    'ytick.labelsize': 14,          # font size of the tick labels
+    'legend.fontsize': 14,          # font size of the legend
+    "axes.spines.right": False,
+    "axes.spines.top": False})
 
   # set the resolution to 300 DPI
 
@@ -40,7 +41,7 @@ def paf_to_dataframe(file):
     df = pd.DataFrame(data, columns=['read_id','read_length','ref_length', 'mapping_location', 'mapq', 'AS_score', 'NM_score'])
     # return a test df
     #
-    # df = df.head(1000)
+    df = df.head(1000)
     return df
 
 def filter_max_score_keep_dups(df):
@@ -155,7 +156,7 @@ def add_mapq_flag(pivoted_df):
 
 def make_category_barplot(df, output_prefix, gene_list):
     df = df['mapping_category'].value_counts().reset_index()
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(4, 4))
     sns.barplot(x='mapping_category', y='count', data=df, ci=None)
     plt.title('Counts in each category')
     plt.xlabel('Mapping Category')
@@ -164,7 +165,7 @@ def make_category_barplot(df, output_prefix, gene_list):
     plt.tight_layout()
 
     # Save the plot
-    plt.savefig(f'{output_prefix}_categories_barplot.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_prefix}_categories_barplot.pdf', dpi=300, bbox_inches='tight', transparent=True)
 
 def get_mapping_cat_per_gene(df):
     # Split the 'mapping_location' column on commas to create a list
@@ -203,7 +204,7 @@ def write_multi_mapping_file(df, output_prefix):
     df_multi.to_csv(f'{output_prefix}_gene_counts.tsv', sep='\t', index=False)
     
 
-def get_haplotype_props(df, output_prefix, gene_list):
+def get_haplotype_props(df, output_prefix, gene_list, min_gene_counts):
     # pivot table to get the counts of each haplotype
     # Calculate the total count for each mapping location
     # Filter df to onlty include unique mapping locations
@@ -218,13 +219,17 @@ def get_haplotype_props(df, output_prefix, gene_list):
 
     # Calculate the proportion of each category for each mapping location
     df['proportion'] = df.apply(lambda row: row['count'] / total_counts[row['gene']], axis=1)
-    df = df[df['gene'].map(total_counts) >= 10]
+
+    # Filter out mapping locations with less than 10 reads
+
+    min_gene_counts = int(min_gene_counts)
+    df = df[df['gene'].map(total_counts) >= min_gene_counts]
    
     print(df)
     # Sort the DataFrame by 'proportion' in descending order
     df = df.sort_values(by='proportion', ascending=False)
     # Save the DataFrame to a file
-    df.to_csv(f'{output_prefix}_haplotype_props.tsv', sep='\t', index=False)
+    df.to_csv(f'{output_prefix}_min{min_gene_counts}counts_haplotype_props.tsv', sep='\t', index=False)
     return df
 
 def filter_mapq(df):
@@ -232,7 +237,7 @@ def filter_mapq(df):
     return df[df['mapq_flag'] != "mapq_lt6"]
 
 def barplot(df, output_prefix):
-    plt.figure(figsize=(10, 6))
+    #plt.figure(figsize=(10, 6))
     sns.barplot(x='mapping_category', y='count', data=df, ci=None)
     plt.title('Counts in each category')
     plt.xlabel('Mapping Category')
@@ -241,9 +246,11 @@ def barplot(df, output_prefix):
     plt.tight_layout()
 
     # Save the plot
-    plt.savefig(f'{output_prefix}_barplot.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_prefix}_barplot.pdf', dpi=300, bbox_inches='tight')
+    # close the plot
+    plt.close()
 
-def histplot(df, output_prefix):
+def histplot(df, output_prefix, min_gene_counts):
     # PIVOT DF
     print(df)
     # Drop row with nan in gene colum
@@ -256,25 +263,63 @@ def histplot(df, output_prefix):
     #
     # df = df.set_index('gene')
     df  = df.pivot(index='gene', columns='mapping_category', values='proportion')
-
-
     print(df)
     
     if 'RIL' in output_prefix:
         colum_to_plot = 'ASE_12272'
     if 'Atlantic' in output_prefix:
+        # rename the columns 1G, 2G, 3G, 4G to hap1, hap2, hap3, hap4
         colum_to_plot = 'ASE_1G'
     if 'Orang' in output_prefix:
         colum_to_plot = 'ASE_hap1'
-
-    plt.figure(figsize=(10, 6))
-    
-    sns.histplot(data=df, x= colum_to_plot, bins = 100, color = 'blue')
+    print(df)
+    #plt.figure(figsize=(10, 6))
+    # cleant the plot before new plot
+    plt.clf()
+    plt.figure(figsize=(3, 3))
+    sns.histplot(data=df, x= colum_to_plot, bins = 50, color = 'blue')
     #plt.title('Histogram of read counts per category')
-    plt.xlabel(f'Proportions of {colum_to_plot}')
-    plt.ylabel('Count')
+    plt.xlabel(f'')
+    plt.ylabel('')
+    #plt.text(0.65, 0.5, f'Number of genes: {len(df)}', fontsize=12, transform=plt.gcf().transFigure)
     plt.tight_layout()
-    plt.savefig(f'{output_prefix}_histplot.pdf', dpi=300)
+    plt.savefig(f'{output_prefix}_min{min_gene_counts}_hist.pdf', dpi=200)
+
+def histplot_weighted(df, output_prefix, min_gene_counts):
+    # PIVOT DF
+    print(df)
+    # Drop row with nan in gene colum
+    # Set the index back to 'gene'
+    # Drop row with nan in gene column
+    df = df.dropna(subset=['gene'])
+    print(df)
+    print(df.columns)
+    # Set the index back to 'gene'
+    #
+    # df = df.set_index('gene')
+    df  = df.pivot(index='gene', columns='mapping_category', values=['proportion', 'count'])
+    df.columns = ['_'.join(col).strip() for col in df.columns.values]
+    print(df)
+    
+    if 'RIL' in output_prefix:
+        colum_to_plot = 'ASE_12272'
+    if 'Atlantic' in output_prefix:
+        # rename the columns 1G, 2G, 3G, 4G to hap1, hap2, hap3, hap4
+        colum_to_plot = 'ASE_1G'
+    if 'Orang' in output_prefix:
+        colum_to_plot = 'ASE_hap1'
+    print(df)
+    #plt.figure(figsize=(10, 6))
+    # cleant the plot before new plot
+    plt.clf()
+    plt.figure(figsize=(3, 3))
+    sns.histplot(data=df, x= f'proportion_{colum_to_plot}', bins = 50, color = 'red',  weights = f'count_{colum_to_plot}')
+    #plt.title('Histogram of read counts per category')
+    plt.xlabel(f'')
+    plt.ylabel('')
+    #plt.text(0.65, 0.5, f'Number of genes: {len(df)}', fontsize=12, transform=plt.gcf().transFigure)
+    plt.tight_layout()
+    plt.savefig(f'{output_prefix}_min{min_gene_counts}_hist_weighted.pdf', dpi=200)
 
 def load_data(paf):
     if paf.endswith('.paf'):
@@ -297,29 +342,32 @@ def process_data(df, output_prefix, gene_list):
     write_multi_mapping_file(pivot_with_cat, output_prefix)
     return gene_counts
 
-def main(paf, output_prefix):
+def main(paf, output_prefix, min_gene_counts):
     df = load_data(paf)
+    # df = df.head(50000) 
+
     gene_list = list(pd.read_csv("/blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/hap_genomes/AG06213_PAB.hap1.hap2.shared_genes.tsv", index_col=0).index)
     filtered_df = filter_data(df)
     
     gene_counts = process_data(filtered_df, output_prefix, gene_list)
     print(gene_counts)
     gene_counts.fillna(0, inplace=True)
-    gene_props = get_haplotype_props(gene_counts, output_prefix, gene_list)
+    gene_props = get_haplotype_props(gene_counts, output_prefix, gene_list, min_gene_counts)
 
-    
 
     print(gene_props.loc[gene_props['proportion'].nlargest(10).index])
 
-    histplot(gene_props, output_prefix)
+    histplot(gene_props, output_prefix, min_gene_counts)
+    histplot_weighted(gene_props, output_prefix, min_gene_counts)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process two PAF files.')
     parser.add_argument('--paf', type=str, help='Path to the first seperate PAF file')
     parser.add_argument('--output_prefix', type=str, help='Prefix output file')
+    parser.add_argument('--min_gene_counts', type=str, help='min gene counts')
     args = parser.parse_args()
-    main(args.paf,  args.output_prefix)
+    main(args.paf,  args.output_prefix, args.min_gene_counts)
 
 
 #python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/bar_plot_cats.py --paf test_data/align_seperate_dm12272_01h_rep1.paf  --output_prefix dm12272_01h_rep1_test_RIL

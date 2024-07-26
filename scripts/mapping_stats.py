@@ -14,7 +14,7 @@ def parse_line(line):
     for field in fields[12:]:
         if field.startswith('NM'):
             NM_score = field.split(':')[2]
-        if field.startswith('AS'):
+        if field.startswith('ms'):
             AS_score = field.split(':')[2]
             break
     return read_id, read_length, mapping_location, mapq, AS_score, NM_score

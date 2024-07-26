@@ -8,13 +8,15 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 pd.options.mode.chained_assignment = None
 
-sns.set_theme(style='whitegrid', rc={
-    'figure.figsize': (6.4, 6.4),  # figure size in inches
-    'axes.labelsize': 14,           # font size of the x and y labels
-    'xtick.labelsize': 12,          # font size of the tick labels
-    'ytick.labelsize': 12,          # font size of the tick labels
-    'legend.fontsize': 12,          # font size of the legend
-})
+sns.set_theme(style='ticks', rc={
+    'figure.figsize': (8, 4),  # figure size in inches
+    'axes.labelsize': 16,           # font size of the x and y labels
+    'xtick.labelsize': 16,          # font size of the tick labels
+    'ytick.labelsize': 16,          # font size of the tick labels
+    'legend.fontsize': 16,          # font size of the legend
+    "axes.spines.right": False, 
+    "axes.spines.top": False})
+
 
   # set the resolution to 300 DPI
 
@@ -75,6 +77,8 @@ def add_haplotype_info(df, output_prefix):
     if 'Atlantic' in output_prefix:
         pattern = r'(\dG)'
         df['haplotype'] = df['mapping_location'].str.extract(pattern)
+        # rename the haplotypes 0G to unphased, 1G to hap1, 2G to hap2, 3G to hap3, 4G to hap4
+        df['haplotype'] = df['haplotype'].replace({'0G': 'unphased', '1G': 'hap1', '2G': 'hap2', '3G': 'hap3', '4G': 'hap4'})
         print(df['haplotype'])
     if 'Orang' in output_prefix:
         df['haplotype'] = df['mapping_location'].str.split('_').str[0]
@@ -94,7 +98,7 @@ def add_gene_info(df, output_prefix):
 
 def add_longest_transcript(df, output_prefix):
     if 'Atlantic' in output_prefix:
-        df['haplotype_with_longest_annotation'] = df[['ref_length_1G', 'ref_length_2G', 'ref_length_3G', 'ref_length_4G']].idxmax(axis=1)
+        df['haplotype_with_longest_annotation'] = df[['ref_length_hap1', 'ref_length_hap2', 'ref_length_hap3', 'ref_length_hap4']].idxmax(axis=1)
     if 'Orang' in output_prefix:
         df['haplotype_with_longest_annotation'] = df[['ref_length_hap1', 'ref_length_hap2']].idxmax(axis=1)
     # Remove the 'ref_length_unique_' prefix
@@ -144,7 +148,7 @@ def remove_duplicates(s):
     return int(mean)
 
 def add_mapping_category(pivoted_df):
-    pivoted_df['mapping_category'] = 'unclassified'
+    pivoted_df['mapping_category'] = 'multimapping_multi_genes'
  
     pivoted_df.loc[pivoted_df['mapping_location'].apply(check_if_comma), 'mapping_category'] = pivoted_df['haplotype'].apply(lambda x: f'unique_{x}')
 
@@ -208,22 +212,23 @@ def create_scatter_plot(df, output_prefix):
     # Create a color dictionary to map each unique mapping category to a color
     # get the unique mapping categories
     mapping_categories = df['mapping_category'].unique()
+    df['mapping_category'] = df['mapping_category'].replace({'multimapping_multi_genes': 'Multimapping, multi genes', 'multimapping_same_gene': 'Multimapping, same gene', 'unique_12272': 'Unique mapping, haplotype 1', 'unique_w1118': 'Unique mapping, haplotype 2', 'unique_hap1': 'Unique mapping, haplotype 1', 'unique_hap2': 'Unique mapping, haplotype 2', 'unique_hap3': 'Unique mapping, haplotype 3', 'unique_hap4': 'Unique mapping, haplotype 4', 'unique_unphased': 'Unique mapping, unphased'})
     #print(mapping_categories)
     # Create a dictionary to map each unique mapping category to a color and a shape
     if "RIL" in output_prefix:
-        my_markers = {"unclassified": "X", "multimapping_same_gene": "s", "unique_12272": "o", "unique_w1118": "o"}
+        my_markers = {'Multimapping, multi genes': "X", "Multimapping, same gene": "s", 'Unique mapping, haplotype 1': "o", 'Unique mapping, haplotype 2': "o"}
         
-        my_palette = {"unclassified": "grey", "multimapping_same_gene": "black", "unique_12272": "red", "unique_w1118": "blue"}
+        my_palette = {'Multimapping, multi genes': "grey", 'Multimapping, same gene': "black", 'Unique mapping, haplotype 1': "red", 'Unique mapping, haplotype 2': "blue"}
 
     if "Orang" in output_prefix:
-        my_markers = {"unclassified": "X", "multimapping_same_gene": "s", "unique_hap1": "o", "unique_hap2": "o"}
+        my_markers = {'Multimapping, multi genes': "X", 'Multimapping, same gene': "s", 'Unique mapping, haplotype 1': "o", 'Unique mapping, haplotype 2': "o"}
         
-        my_palette = {"unclassified": "grey", "multimapping_same_gene": "black", "unique_hap1": "red", "unique_hap2": "blue"}
+        my_palette = {'Multimapping, multi genes': "grey", 'Multimapping, same gene': "black", 'Unique mapping, haplotype 1': "red", 'Unique mapping, haplotype 2': "blue"}
 
     if "Atlantic" in output_prefix:
-        my_markers = {"unclassified": "X", "multimapping_same_gene": "s", "unique_1G": "o", "unique_2G": "o", "unique_3G": "o", "unique_4G": "o",  "unique_0G": "o"}
+        my_markers = {'Multimapping, multi genes': "X", 'Multimapping, same gene': "s", 'Unique mapping, haplotype 1': "o", 'Unique mapping, haplotype 2': "o", 'Unique mapping, haplotype 3': "o", 'Unique mapping, haplotype 4': "o",  'Unique mapping, unphased': "o"}
         
-        my_palette = {"unclassified": "grey","multimapping_same_gene": "black", "unique_1G": "red", "unique_2G": "orange", "unique_3G": "green", "unique_4G": "blue", "unique_0G": "purple"}
+        my_palette = {'Multimapping, multi genes': "grey",'Multimapping, same gene': "black", 'Unique mapping, haplotype 1': "red", 'Unique mapping, haplotype 2': "blue", 'Unique mapping, haplotype 3': "green", 'Unique mapping, haplotype 4': "orange", 'Unique mapping, unphased': "purple"}
 
     # Get unique categories
     categories = df['mapping_category'].unique()
@@ -242,33 +247,37 @@ def create_scatter_plot(df, output_prefix):
     #         plt.title(f'Scatterplot for {category}')  # Set the title of the plot
     #         pdf.savefig()  # Save the current figure to the PDF
     #         plt.clf()  # Clear the current figure
-
+    # Rename the values in mapping category colum
+    
+    # sort the data on the mapping category
+    df = df.sort_values(by='mapping_category')
     scatterplot = sns.scatterplot(data=df, x="count_seperate", y="count_competetive", hue="mapping_category", style="mapping_category", palette= my_palette, markers=my_markers)
 
-    # # Get the x and y data from the DataFrame
-    # x = df["count_seperate"].dropna()
-    # y = df["count_competetive"].dropna()
+    # calculate the correlation between the two columns
+    corr = df['count_seperate'].corr(df['count_competetive'])
 
-    # # Calculate the 1st and 99th percentiles
-    # x_low, x_high = np.percentile(x, [1, 99])
-    # y_low, y_high = np.percentile(y, [1, 99])
 
-    # # Set the limits
-    # scatterplot.set_xlim(x_low, x_high)
-    # scatterplot.set_ylim(y_low, y_high)
-    
-    if "RIL" in output_prefix:
-        scatterplot.set_xlim(0, 30000)
-        scatterplot.set_ylim(0, 30000)
+    # Set axes to log scale
+    scatterplot.set_xscale("log")
+    scatterplot.set_yscale("log")
+    # Rename the legend
+    # place legend outside of plot
+    scatterplot.legend(title="Mapping category", bbox_to_anchor=(1.05, 1), loc='upper left')
 
+    # make the x and y axis labels the same
     # Add ax labels
-    scatterplot.set_xlabel("Seperate mapping count")
-    scatterplot.set_ylabel("Competetive mapping count")
+    #scatterplot.set_xlabel("Count per gene (Seperate mapping to haplotypes)")
+    scatterplot.set_xlabel("")
+
+    #scatterplot.set_ylabel("Count per gene (Competetive mapping to genotype)")
+    scatterplot.set_ylabel("")
+    # add the correlation to the plot
+    scatterplot.text(0.35, 0.25, f'corr: {corr:.2f}', fontsize=16, transform=plt.gcf().transFigure)
 
     # save the plot
     fig = scatterplot.get_figure()
     fig.tight_layout()
-    fig.savefig(f"all_{output_prefix}_scatter_plot.pdf")
+    fig.savefig(f"all_{output_prefix}_scatter_plot.pdf", dpi=300, bbox_inches='tight', transparent=True)
 
 def filter_mapq(df):
     # Filter the DataFrame on mapq == 0
@@ -290,6 +299,8 @@ def main(paf1, paf2, output_prefix):
     else:
         # read in pafs as tsv files
         dfs = [pd.read_csv(paf, sep='\t') for paf in [paf1, paf2]]
+        # set a subset for testing
+        #dfs = [df.head(10000) for df in dfs]
  
     # dfs = [paf_to_dataframe(paf) for paf in [paf1, paf2]]
     # Filter dfs for minimum read length
@@ -322,4 +333,4 @@ if __name__ == "__main__":
     main(args.paf_seperate, args.paf_competetive, args.output_prefix)
 
 
-#python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/plot_mapping_strategy_comparison.py --paf_seperate test_data/align_seperate_dm12272_01h_rep1.paf  --paf_competetive test_data/align_competetive_dm12272_01h_rep1_allhaps.paf --output_prefix dm12272_01h_rep1_test_RIL
+#python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/plot_mapping_strategy_comparison.py --paf_seperate out_ms/paf_tsv_files/RIL_updated_seperate_P.tsv  --paf_competetive out_ms/paf_tsv_files/RIL_updated_competetive_P.tsv --output_prefix RIL_test_size
