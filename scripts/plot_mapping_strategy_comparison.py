@@ -272,7 +272,7 @@ def create_scatter_plot(df, output_prefix):
     #scatterplot.set_ylabel("Count per gene (Competetive mapping to genotype)")
     scatterplot.set_ylabel("")
     # add the correlation to the plot
-    scatterplot.text(0.35, 0.25, f'corr: {corr:.2f}', fontsize=16, transform=plt.gcf().transFigure)
+    #scatterplot.text(0.35, 0.25, f'corr: {corr:.2f}', fontsize=16, transform=plt.gcf().transFigure)
 
     # save the plot
     fig = scatterplot.get_figure()

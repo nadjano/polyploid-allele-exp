@@ -27,7 +27,6 @@ process PLOT {
     --paf_competetive ${experiment}_competetive_${mm_parameters}.tsv \
     --output_prefix ${experiment}_${mm_parameters}
 
-    echo "Hello you!"
     mkdir -p ${experiment}_${mm_parameters}_tsv 
     mv *.tsv ${experiment}_${mm_parameters}_tsv 
     """

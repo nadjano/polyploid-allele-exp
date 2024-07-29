@@ -9,7 +9,7 @@ Here we compa
 
 process LENGTHBIAS {
 
-    tag {"Identify length bias between hapl0types $experiment $sample_id"}
+    tag {"Identify length bias between haplotypes $experiment $sample_id"}
     label 'process_mem'
   
     publishDir params.length_plot,  mode:'link'
@@ -22,6 +22,7 @@ process LENGTHBIAS {
     def mm_parameters = mm_parameters.replace(' ', '').replace('-', '')
     """
     module load python
+    echo "Hell0"
     python3 ${baseDir}/scripts/length_difference.py --paf *competetive*tsv --output_prefix ${experiment}_${mm_parameters}
     """
 }

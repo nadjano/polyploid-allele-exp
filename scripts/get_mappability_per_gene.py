@@ -80,11 +80,17 @@ def process_gene_counts(gene_counts, output_prefix):
     print(df.loc[df['haplotype'] == 'mixed'])
     # remove the list in the hapltype colum
     df['haplotype'] = df['haplotype'].apply(lambda x: x[0])
+    # remove the lines that are duplicated
+    #df = df.applymap(lambda x: tuple(x) if type(x) == list else x)
+
     return df
 
 
 def get_mappability_per_gene(df, output_prefix):
     unpivoted_df = df.explode('gene')
+    print(unpivoted_df)
+    unpivoted_df = unpivoted_df.applymap(lambda x: tuple(x) if type(x) == list else x)
+    unpivoted_df = unpivoted_df.drop_duplicates()
     print(unpivoted_df)
     # for each gene count the number of rows it has with m haplotype
     unpivoted_df['M_count'] = unpivoted_df['haplotype'].apply(lambda x: x == 'm')
@@ -94,32 +100,57 @@ def get_mappability_per_gene(df, output_prefix):
     print(pivot)
     # rename the columns m to multi_genes and s to same_gene
     pivot = pivot.rename(columns={'m': 'multi_genes', 's': 'same_gene'})
-    # devide the values in s colum by 2
-    pivot['same_gene'] = pivot['same_gene'] / 2
+    print(pivot.loc[(pivot['multi_genes'] > 0) & (pivot['same_gene'] > 0)])
+
+    # if atlantic, divide the values in  by 4
+    # if 'Atlantic' in output_prefix:
+    #     pivot['same_gene'] = pivot['same_gene'] / 4
+    # else:
+    #     pivot['same_gene'] = pivot['same_gene'] / 2
     # print the rows with m > 0
     # sort by m
     pivot = pivot.sort_values(by='multi_genes', ascending=False)
     print(pivot.loc[pivot['multi_genes'] > 5])
     if 'Orang' in output_prefix:
-        pivot['mappability'] = (pivot['hap1'] + pivot['hap2'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['hap1'] + pivot['hap2']) 
+        pivot['mappability_ASE'] = (pivot['hap1'] + pivot['hap2'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['hap1'] + pivot['hap2']) 
     if 'RIL' in output_prefix:
-        pivot['mappability'] = (pivot['w1118'] + pivot['12272'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['w1118'] + pivot['12272'])
+        pivot['mappability_ASE'] = (pivot['w1118'] + pivot['12272'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['w1118'] + pivot['12272'])
     if 'Atlantic' in output_prefix:
         # rename the columns 1G, 2G, 3G, 4G to hap1, hap2, hap3, hap4
         pivot = pivot.rename(columns={'1G': 'hap1', '2G': 'hap2', '3G': 'hap3', '4G': 'hap4'})
-        pivot['mappability'] = (pivot['hap1'] + pivot['hap2'] + pivot['hap3'] + pivot['hap4'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['hap1'] + pivot['hap2'] + pivot['hap3'] + pivot['hap4'])
+        pivot['mappability_ASE'] = (pivot['hap1'] + pivot['hap2'] + pivot['hap3'] + pivot['hap4'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['hap1'] + pivot['hap2'] + pivot['hap3'] + pivot['hap4'])
+    
+    if 'Orang' in output_prefix:
+        pivot['mappability_gene'] = (pivot['hap1'] + pivot['hap2']+ pivot['same_gene'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['hap1'] + pivot['hap2']) 
+    if 'RIL' in output_prefix:
+        pivot['mappability_gene'] = (pivot['w1118'] + pivot['12272']+ pivot['same_gene'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['w1118'] + pivot['12272'])
+    if 'Atlantic' in output_prefix:
+        # rename the columns 1G, 2G, 3G, 4G to hap1, hap2, hap3, hap4
+        pivot = pivot.rename(columns={'1G': 'hap1', '2G': 'hap2', '3G': 'hap3', '4G': 'hap4'})
+        pivot['mappability_gene'] = (pivot['hap1'] + pivot['hap2'] + pivot['hap3'] + pivot['hap4'] + pivot['same_gene'])/ (pivot['multi_genes'] + pivot['same_gene'] +  pivot['hap1'] + pivot['hap2'] + pivot['hap3'] + pivot['hap4'])
     print(pivot)
     # LOC100447686
     #save the pivot table to a file
     pivot.to_csv(f'{output_prefix}_mappability_per_gene.csv')
     return pivot
 
-def plot_histogram(df, output_prefix):
-    sns.histplot(df['mappability'], bins=50, color='black', )
+def plot_histogram_ASE(df, output_prefix):
+    sns.histplot(df['mappability_ASE'], bins=50, color='red')
     #plt.hist(df['mappability'], bins=100)
     # add number of genes to the plot
-    plt.text(0.5, 0.5, f'#genes: {len(df)}', fontsize=12, transform=plt.gcf().transFigure)
-    plt.xlabel('Mappability')
+    plt.text(0.2, 0.7, f'#genes: {len(df)}', fontsize=12, transform=plt.gcf().transFigure)
+    plt.xlabel('Allele Mappability')
+    plt.ylabel('Number of genes')
+    plt.savefig(f'{output_prefix}_mappability_per_allele_min20_counts.pdf', dpi=300, bbox_inches='tight', transparent=True)
+    # clean the plot
+    plt.clf()
+
+def plot_histogram_gene(df, output_prefix):
+    sns.histplot(df['mappability_gene'], bins=50, color='black')
+    #plt.hist(df['mappability'], bins=100)
+    # add number of genes to the plot
+    plt.text(0.2, 0.7, f'#genes: {len(df)}', fontsize=12, transform=plt.gcf().transFigure)
+    plt.xlabel('Gene Mappability')
     plt.ylabel('Number of genes')
     plt.savefig(f'{output_prefix}_mappability_per_gene_min20_counts.pdf', dpi=300, bbox_inches='tight', transparent=True)
 
@@ -137,7 +168,8 @@ def main():
     gene_counts = get_mappability_per_gene(gene_counts, args.output_prefix)
     # filter to only include genes with total counts > 20 
     gene_counts = gene_counts.loc[gene_counts.iloc[:, 0:-1].sum(axis=1) > 20]
-    plot_histogram(gene_counts, args.output_prefix)
+    plot_histogram_ASE(gene_counts, args.output_prefix)
+    plot_histogram_gene(gene_counts, args.output_prefix)
 
 if __name__ == '__main__':
     main()
@@ -148,6 +180,6 @@ if __name__ == '__main__':
 # python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/get_mappability_per_gene.py -i out_ms/bar_plots/RIL_updated_P_counts_tsv/RIL_updated_P_gene_counts.tsv  -o RIL_ms
 
 
-#python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/get_mappability_per_gene.py -i out_ms/bar_plots/Orangutan_N200_counts_tsv/Orangutan_N200_gene_counts.tsv  -o Orang-ms
+#python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/get_mappability_per_gene.py -i out_ms/bar_plots/Orangutan_P_counts_tsv/Orangutan_P_gene_counts.tsv  -o Orang_ms
 
-#python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/get_mappability_per_gene.py -i out_ms/bar_plots/Atlantic_N200_counts_tsv/Atlantic_N200_gene_counts.tsv  -o Atlantic-ms
+#python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/get_mappability_per_gene.py -i out_ms/bar_plots/Atlantic_P_counts_tsv/Atlantic_P_gene_counts.tsv  -o Atlantic_ms

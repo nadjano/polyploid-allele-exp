@@ -283,7 +283,7 @@ def histplot(df, output_prefix, min_gene_counts):
     plt.ylabel('')
     #plt.text(0.65, 0.5, f'Number of genes: {len(df)}', fontsize=12, transform=plt.gcf().transFigure)
     plt.tight_layout()
-    plt.savefig(f'{output_prefix}_min{min_gene_counts}_hist.pdf', dpi=200)
+    plt.savefig(f'{output_prefix}_min{min_gene_counts}_hist.pdf', dpi=200, transparent=True,  bbox_inches='tight')
 
 def histplot_weighted(df, output_prefix, min_gene_counts):
     # PIVOT DF
@@ -299,6 +299,10 @@ def histplot_weighted(df, output_prefix, min_gene_counts):
     # df = df.set_index('gene')
     df  = df.pivot(index='gene', columns='mapping_category', values=['proportion', 'count'])
     df.columns = ['_'.join(col).strip() for col in df.columns.values]
+    # make a new column with the sum of the counts
+    # get all columns that start with count
+    count_cols = [col for col in df.columns if 'count' in col]
+    df['total_count'] = df[count_cols].sum(axis=1)
     print(df)
     
     if 'RIL' in output_prefix:
@@ -313,13 +317,13 @@ def histplot_weighted(df, output_prefix, min_gene_counts):
     # cleant the plot before new plot
     plt.clf()
     plt.figure(figsize=(3, 3))
-    sns.histplot(data=df, x= f'proportion_{colum_to_plot}', bins = 50, color = 'red',  weights = f'count_{colum_to_plot}')
+    sns.histplot(data=df, x= f'proportion_{colum_to_plot}', bins = 50, color = 'red',  weights = 'total_count')
     #plt.title('Histogram of read counts per category')
     plt.xlabel(f'')
     plt.ylabel('')
     #plt.text(0.65, 0.5, f'Number of genes: {len(df)}', fontsize=12, transform=plt.gcf().transFigure)
     plt.tight_layout()
-    plt.savefig(f'{output_prefix}_min{min_gene_counts}_hist_weighted.pdf', dpi=200)
+    plt.savefig(f'{output_prefix}_min{min_gene_counts}_hist_weighted.pdf',  dpi=200, transparent=True,  bbox_inches='tight')
 
 def load_data(paf):
     if paf.endswith('.paf'):

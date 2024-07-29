@@ -29,5 +29,6 @@ process BARPLOT {
     echo "Hello"
     mkdir -p ${experiment}_${mm_parameters}_counts_tsv
     mv *.tsv ${experiment}_${mm_parameters}_counts_tsv/
+    
     """
 }

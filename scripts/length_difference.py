@@ -275,7 +275,7 @@ def get_haplotype_props(df, output_prefix, gene_list):
     total_counts = df.groupby('gene')['count'].sum()
 
     # Calculate the proportion of each category for each mapping location
-    df['count_proportion'] = df.apply(lambda row: row['count'] / total_counts[row['gene']], axis=1)
+    df['ratio'] = df.apply(lambda row: row['count'] / total_counts[row['gene']], axis=1)
     
     df = df[df['gene'].map(total_counts) >= 10]
 
@@ -294,7 +294,7 @@ def barplot(df, output_prefix):
     plt.savefig(f'{output_prefix}_barplot.png', dpi=300, bbox_inches='tight')
 
 def pivot_genes(df):
-    df  = df.pivot(index='gene', columns='mapping_category', values=['count_proportion'])
+    df  = df.pivot(index='gene', columns='mapping_category', values=['ratio'])
     df.columns = ['_'.join(col) for col in df.columns.values]
     # convert coutn_proportion 
     print(df)
@@ -303,7 +303,7 @@ def pivot_genes(df):
 def box_plot(df, output_prefix):
     # Create a scatter plot of 'prop_ASE_read_G1' vs 'prop_ASE_read_G2'
     #plt.figure(figsize=(10, 10))
-    ax = sns.boxplot(data=df, x="length_category", y='count_proportion', hue='mapping_category')
+    ax = sns.boxplot(data=df, x="length_category", y='ratio', hue='mapping_category')
 
     # Add number of observations
     for i in range(len(df['length_category'].unique())):
@@ -320,7 +320,7 @@ def box_plot(df, output_prefix):
 def boxplot1(df, output_prefix):
     plt.figure(figsize=(4, 4))
     # Make a boxplot
-    ax1 = sns.boxplot(data=df, x="haplotype_with_longest_annotation", y='count_proportion', hue='mapping_category')
+    ax1 = sns.boxplot(data=df, x="haplotype_with_longest_annotation", y='ratio', hue='mapping_category')
 
     # Add number of observations
     # for i in range(len(df['haplotype_with_longest_annotation'].unique())):
@@ -375,13 +375,13 @@ def main(paf, output_prefix):
     ASE_gene_props = get_haplotype_props(gene_counts_ASE, output_prefix, gene_list)
     
     pivoted_genes = pivot_genes(ASE_gene_props)
-    count_columns = [col for col in pivoted_genes.columns if 'count' in col]
+    count_columns = [col for col in pivoted_genes.columns if 'ratio' in col]
     pivoted_genes = pivoted_genes.dropna(subset=count_columns, thresh=len(count_columns) - 3)
     pivoted_genes = pivoted_genes.reset_index()
-    pivoted_genes = pivoted_genes.melt(id_vars=['gene'], value_vars=count_columns, var_name='mapping_category', value_name='count_proportion')
+    pivoted_genes = pivoted_genes.melt(id_vars=['gene'], value_vars=count_columns, var_name='mapping_category', value_name='ratio')
 
     joined = pd.merge(pivoted_genes, transcript_lengths, on='gene', how='left')
-
+    print(joined)
     box_plot(joined, output_prefix)
     boxplot1(joined, output_prefix)
  
