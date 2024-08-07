@@ -32,10 +32,11 @@ wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/028/885/655/GCF_028885655.2_NH
 zcat GCF_028885655.2_NHGRI_mPonAbe1-v2.0_pri_genomic.gff.gz | grep "NC_002083.1" > mitochrondrial_genes.gff
 
 
-# primary reference
+# alt reference
 #wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/028/885/685/GCA_028885685.2_NHGRI_mPonAbe1-v2.0_alt/GCA_028885685.2_NHGRI_mPonAbe1-v2.0_alt_genomic.fna.gz
 
-# alt reference
+
+# primary reference
 # wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/028/885/655/GCF_028885655.2_NHGRI_mPonAbe1-v2.0_pri/GCF_028885655.2_NHGRI_mPonAbe1-v2.0_pri_genomic.fna.gz
 
 

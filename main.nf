@@ -117,7 +117,8 @@ include {LENGTHBIAS} from "./modules/lengthbias"
 */
 
 workflow {
-   mm_paramers = Channel.from("-N 200", "-P")
+   // mm_paramers = Channel.from("-N 200", "-P")
+   mm_paramers = Channel.from("-N 200", "-P", "-P -f 0.000002")
    //mm_paramers = Channel.from("-N 200")
    minimap_out = MINIMAP2(samples_mapping_ch.combine(mm_paramers))
    minimap_out.transpose().view()
@@ -147,7 +148,7 @@ workflow {
     BARPLOT(minimap_out_grouped)
 
     // Filter channel for experiment == Orangutan and Atlantic
-    minimap_out_grouped_length = minimap_out_grouped.join(Channel.of("Orangutan", "Atlantic"))
+    minimap_out_grouped_length = minimap_out_grouped.join(Channel.of("Orangutan", "Atlantic", "Atlantic_withS"))
 
     LENGTHBIAS(minimap_out_grouped_length)
 

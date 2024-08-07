@@ -40,13 +40,15 @@ def get_transcript_lengths(gff_file, output_prefix):
 
     # Iterate over all features of type 'transcript' in the GFF file
     for transcript in db.features_of_type('exon'):
+        print(transcript)
         if 'Atlantic' in output_prefix:
             if 'Synt' in transcript.id and 'x4' in transcript.id:
                 # Calculate the length of the transcript
                 length = transcript.end - transcript.start + 1
-
+                
                 # Store the length in the dictionary, using the transcript ID as the key
                 transcript_lengths[transcript.id] = length
+                print(transcript_lengths)
         if 'Orang' in output_prefix:
       
             # Calculate the length of the transcript
@@ -55,6 +57,37 @@ def get_transcript_lengths(gff_file, output_prefix):
             # Store the length in the dictionary, using the transcript ID as the key
             transcript_lengths[transcript.id] = length
     
+    df = pd.DataFrame.from_dict(transcript_lengths, orient='index', columns=['ref_length'])
+    return df
+
+def get_transcript_lengths(gff_file, output_prefix):
+    # Create a database from the GFF file
+    db = gffutils.create_db(gff_file, dbfn='gff.db', force=True, keep_order=True,
+                            merge_strategy='merge', sort_attribute_values=True)
+
+    # Initialize an empty dictionary to store transcript lengths
+    transcript_lengths = {}
+
+    # Iterate over all features of type 'exon' in the GFF file
+    for exon in db.features_of_type('exon'):
+
+        parent_id = exon.attributes['Parent'][0]
+        print(parent_id )
+        length = exon.end - exon.start + 1
+        print(length)
+        if parent_id not in transcript_lengths:
+            transcript_lengths[parent_id] = 0
+
+        transcript_lengths[parent_id] += length
+    print(transcript_lengths)
+
+    # Filter based on output_prefix if necessary
+    if 'Atlantic' in output_prefix:
+        transcript_lengths = {k: v for k, v in transcript_lengths.items() if 'Synt' in k and 'x4' in k}
+    elif 'Orang' in output_prefix:
+        pass  # No additional filtering needed for 'Orang'
+
+    # Create a DataFrame from the dictionary
     df = pd.DataFrame.from_dict(transcript_lengths, orient='index', columns=['ref_length'])
     return df
 
@@ -111,9 +144,7 @@ def get_haplotype_with_longest_annotation(row):
     elif row['ref_length_hap1'] > row['ref_length_hap2']:
         return 'ref_length_hap1'
     else:
-        return 'ref_length_hap2'
-    
-
+        return 'ref_length_hap2'    
 
 
 def add_longest_transcript(df, output_prefix):
@@ -150,15 +181,17 @@ def pivot_length_table(df, output_prefix):
     return df
 
 def make_barplot(df, output_prefix):
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(5, 3))
     # Sort the DataFrame by the 'length_category' column
     custom_order = ['less_1%_difference','more_1%_difference', 'more_5%_difference', 'more_10%_difference', 'more_20%_difference']  # replace with your actual categories
     df['length_category'] = pd.Categorical(df['length_category'], categories=custom_order, ordered=True)
     sns.countplot(x='length_category', hue='haplotype_with_longest_annotation', data=df)
     plt.xlabel('Length Category')
     plt.ylabel('Count')
+    # turn the x-axis labels
+    plt.xticks(rotation=90)
     plt.title('Counts of Length Categories')
-    plt.savefig(f'{output_prefix}_length_categories.png')
+    plt.savefig(f'{output_prefix}_length_categories.png', dpi=300, bbox_inches='tight', transparent=True)
     plt.close()
 
 
@@ -182,12 +215,22 @@ def main():
     
     df = pivot_length_table(transcript_lengths, args.output_prefix)
 
+
     print(df)
     transcript_lengths_with_cat = add_length_category(df, args.output_prefix)
     transcript_lengths_with_cat = add_longest_transcript(transcript_lengths_with_cat, args.output_prefix)
+    # group by lenth category and count
+    transcript_lengths_with_cat_group = transcript_lengths_with_cat.groupby(['length_category']).size().reset_index(name='count')
+    # save to file 
+    transcript_lengths_with_cat_group.to_csv(f'{args.output_prefix}_length_categories.csv', index=False)
+
+
     make_barplot(transcript_lengths_with_cat, args.output_prefix)
     print(transcript_lengths_with_cat)
     
 
 if __name__ == "__main__":
     main()
+
+
+# python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/get_transcript_lengths_from_gff.py /blue/mcintyre/share/potato_ASE/spuddb_reference_data/ATL_v3.hc_gene_models_syntIDs.repr.gff3 Atlantic 

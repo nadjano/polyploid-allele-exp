@@ -41,8 +41,10 @@ def paf_to_dataframe(file):
     data = [parse_line(line) for line in open(file, 'r')]
     df = pd.DataFrame(data, columns=['read_id','read_length','ref_length', 'mapping_location', 'mapq', 'AS_score', 'NM_score'])
     # return a test df
-    #df = df.head(1000)
+    df = df.head(1000)
     return df
+
+
 
 def filter_max_score_keep_dups(df):
     # Remove all rows with * mapping location
@@ -133,9 +135,9 @@ def join_dfs(dataframes, type, output_prefix):
     # print the rows where the count is different
     diff = merged[merged['count_seperate'] != merged['count_competetive']]
     # Save to file
-    diff.to_csv(f'{output_prefix}_diff.tsv', sep='\t', index=False)
+    diff.to_csv(f'{output_prefix}_gene_diff.tsv', sep='\t', index=False)
 
-    return merged
+    return merged, diff
      
 def remove_duplicates(s):
     # Convert the string to a set of unique numbers
@@ -160,8 +162,7 @@ def add_mapping_category(pivoted_df):
 
     #cat_counts = get_mapping_cat_per_gene(pivoted_df)
 
-    pivoted_df = add_mapq_flag(pivoted_df)
-    print(pivoted_df[['mapping_location', 'mapq', 'mapq_flag']])
+
 
     return pivoted_df
 
@@ -206,13 +207,13 @@ def get_read_with_different_mappings(dataframes, output_prefix):
 
     # save to file
     diff_group.to_csv(f'{output_prefix}_grouped_categories.tsv', sep='\t', index=False)
-    return merged
+    return diffrent_count
 
 def create_scatter_plot(df, output_prefix):
     # Create a color dictionary to map each unique mapping category to a color
     # get the unique mapping categories
     mapping_categories = df['mapping_category'].unique()
-    df['mapping_category'] = df['mapping_category'].replace({'multimapping_multi_genes': 'Multimapping, multi genes', 'multimapping_same_gene': 'Multimapping, same gene', 'unique_12272': 'Unique mapping, haplotype 1', 'unique_w1118': 'Unique mapping, haplotype 2', 'unique_hap1': 'Unique mapping, haplotype 1', 'unique_hap2': 'Unique mapping, haplotype 2', 'unique_hap3': 'Unique mapping, haplotype 3', 'unique_hap4': 'Unique mapping, haplotype 4', 'unique_unphased': 'Unique mapping, unphased'})
+    df['mapping_category'] = df['mapping_category'].replace({'multimapping_multi_genes': 'Multimapping, multi genes', 'multimapping_same_gene': 'Multimapping, same gene', 'unique_12272': 'Unique mapping, haplotype 1', 'unique_w1118': 'Unique mapping, haplotype 2', 'unique_hap1': 'Unique mapping, haplotype 1', 'unique_hap2': 'Unique mapping, haplotype 2', 'unique_hap3': 'Unique mapping, haplotype 3', 'unique_hap4': 'Unique mapping, haplotype 4', 'unique_unphased': 'Unique mapping, unphased', 'unique_nan': 'Unique mapping, scaffold'})
     #print(mapping_categories)
     # Create a dictionary to map each unique mapping category to a color and a shape
     if "RIL" in output_prefix:
@@ -226,9 +227,9 @@ def create_scatter_plot(df, output_prefix):
         my_palette = {'Multimapping, multi genes': "grey", 'Multimapping, same gene': "black", 'Unique mapping, haplotype 1': "red", 'Unique mapping, haplotype 2': "blue"}
 
     if "Atlantic" in output_prefix:
-        my_markers = {'Multimapping, multi genes': "X", 'Multimapping, same gene': "s", 'Unique mapping, haplotype 1': "o", 'Unique mapping, haplotype 2': "o", 'Unique mapping, haplotype 3': "o", 'Unique mapping, haplotype 4': "o",  'Unique mapping, unphased': "o"}
+        my_markers = {'Multimapping, multi genes': "X", 'Multimapping, same gene': "s", 'Unique mapping, haplotype 1': "o", 'Unique mapping, haplotype 2': "o", 'Unique mapping, haplotype 3': "o", 'Unique mapping, haplotype 4': "o",  'Unique mapping, unphased': "o", 'Unique mapping, scaffold': "o"}
         
-        my_palette = {'Multimapping, multi genes': "grey",'Multimapping, same gene': "black", 'Unique mapping, haplotype 1': "red", 'Unique mapping, haplotype 2': "blue", 'Unique mapping, haplotype 3': "green", 'Unique mapping, haplotype 4': "orange", 'Unique mapping, unphased': "purple"}
+        my_palette = {'Multimapping, multi genes': "grey",'Multimapping, same gene': "black", 'Unique mapping, haplotype 1': "red", 'Unique mapping, haplotype 2': "blue", 'Unique mapping, haplotype 3': "green", 'Unique mapping, haplotype 4': "orange", 'Unique mapping, unphased': "purple", 'Unique mapping, scaffold': "brown"}
 
     # Get unique categories
     categories = df['mapping_category'].unique()
@@ -287,11 +288,11 @@ def create_plot_and_close(pivot, join_type, output_prefix):
     pivot = [df.copy() for df in pivot]
     gene_counts = [get_mapping_cat_per_gene(df) for df in pivot]
     print(gene_counts)
-    merged = join_dfs(gene_counts, join_type, output_prefix)
+    merged, diff_genes = join_dfs(gene_counts, join_type, output_prefix)
     print(merged)
     create_scatter_plot(merged, f"{output_prefix}")
     plt.close()
-
+    return diff_genes
 
 def main(paf1, paf2, output_prefix):
     if paf1.endswith('.paf'):
@@ -309,9 +310,10 @@ def main(paf1, paf2, output_prefix):
     dfs = [df.sort_values(by='mapping_location') for df in dfs]
     pivot_with_cat = []
     gene_counts = []
-    
+    unique_mapped_reads = []
     for df in dfs:
         filtered_df = filter_max_score_keep_dups(df)
+        unique_mapped_reads.append(filtered_df['read_id'].nunique())
         # Sort the df on mapping location
         filtered_df = filtered_df.sort_values(by='mapping_location')
         pivot = pivot_table(filtered_df, output_prefix)
@@ -319,10 +321,29 @@ def main(paf1, paf2, output_prefix):
 
 
     # create a scatter plot for unfiltered data
-    create_plot_and_close(pivot_with_cat, "outer", output_prefix)
+    diff_genes = create_plot_and_close(pivot_with_cat, "outer", output_prefix)
+    # number of genes with different counts where the count is different more than 1
+    diff_genes_bt_1 = diff_genes[abs(diff_genes['count_seperate'] - diff_genes['count_competetive']) > 1]
 
     # Get the reads that have different mappings
-    merged_diff = get_read_with_different_mappings(pivot_with_cat, output_prefix)
+    reads_different_mapping = get_read_with_different_mappings(pivot_with_cat, output_prefix)
+
+    
+    total_mapped_genes = [df['mapping_location'].nunique() for df in dfs]
+    # get union from both total_mapped_genes
+    total_mapped_genes = sum(total_mapped_genes) - len(set(dfs[0]['mapping_location']) & set(dfs[1]['mapping_location']))
+
+    # write summary stats file
+    with open(f'{output_prefix}_summary_stats.tsv', 'w') as f:
+        f.write("sample\tunique_mapped_reads_seperate\tunique_mapped_reads_competetive\tdiff_mapped_reads\tdiff_genes\tdiff_genes>1\ttotal_mapped_genes\n")
+        f.write(f"{output_prefix}\t")
+        f.write(f"{unique_mapped_reads[0]}\t")
+        f.write(f"{unique_mapped_reads[1]}\t")
+        f.write(f"{len(reads_different_mapping)}\t")
+        f.write(f"{diff_genes['mapping_location'].nunique()}\t")
+        f.write(f"{diff_genes_bt_1['mapping_location'].nunique()}\t")
+        f.write(f"{total_mapped_genes}\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process two PAF files.')

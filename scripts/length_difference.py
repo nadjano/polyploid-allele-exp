@@ -54,23 +54,26 @@ def get_transcript_lengths(gff_file, output_prefix):
     # Initialize an empty dictionary to store transcript lengths
     transcript_lengths = {}
 
-    # Iterate over all features of type 'transcript' in the GFF file
-    for transcript in db.features_of_type('exon'):
-        if 'Atlantic' in output_prefix:
-            if 'Synt' in transcript.id and 'x4' in transcript.id:
-                # Calculate the length of the transcript
-                length = transcript.end - transcript.start + 1
+    # Iterate over all features of type 'exon' in the GFF file
+    for exon in db.features_of_type('exon'):
 
-                # Store the length in the dictionary, using the transcript ID as the key
-                transcript_lengths[transcript.id] = length
-        if 'Orang' in output_prefix:
-      
-            # Calculate the length of the transcript
-            length = transcript.end - transcript.start + 1
+        parent_id = exon.attributes['Parent'][0]
+        print(parent_id )
+        length = exon.end - exon.start + 1
+        print(length)
+        if parent_id not in transcript_lengths:
+            transcript_lengths[parent_id] = 0
 
-            # Store the length in the dictionary, using the transcript ID as the key
-            transcript_lengths[transcript.id] = length
-    
+        transcript_lengths[parent_id] += length
+    print(transcript_lengths)
+
+    # Filter based on output_prefix if necessary
+    if 'Atlantic' in output_prefix:
+        transcript_lengths = {k: v for k, v in transcript_lengths.items() if 'Synt' in k and 'x4' in k}
+    elif 'Orang' in output_prefix:
+        pass  # No additional filtering needed for 'Orang'
+
+    # Create a DataFrame from the dictionary
     df = pd.DataFrame.from_dict(transcript_lengths, orient='index', columns=['ref_length'])
     return df
 
@@ -319,6 +322,8 @@ def box_plot(df, output_prefix):
 
 def boxplot1(df, output_prefix):
     plt.figure(figsize=(4, 4))
+    # sort by haplotype with longest annotation
+    df = df.sort_values(by='haplotype_with_longest_annotation')
     # Make a boxplot
     ax1 = sns.boxplot(data=df, x="haplotype_with_longest_annotation", y='ratio', hue='mapping_category')
 
@@ -337,7 +342,7 @@ def boxplot1(df, output_prefix):
 
 def get_gff_file(output_prefix):
     if 'Atlantic' in output_prefix:
-        return '/blue/mcintyre/share/potato_ASE/spuddb_reference_data/ATL_v3.hc_gene_models_only_mRNA_syntIDs_noS.repr.gff3'
+        return '/blue/mcintyre/share/potato_ASE/spuddb_reference_data/ATL_v3.hc_gene_models_syntIDs.repr.gff3'
     if 'Orang' in output_prefix:
         return '/blue/mcintyre/share/potato_ASE/orang_utan_references/AG06213_PAB.hap1.hap2.refseq.liftoff.v2_only_gene.gff'
 

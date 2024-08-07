@@ -1,13 +1,9 @@
-grep -v '*' Orangutan_seperate_P.tsv | cut -f1 | sort | uniq | wc -l 
 
+cd *tsv
 
-grep -v '*' Orangutan_competetive_P.tsv | cut -f1 | sort | uniq | wc -l 
+grep -v '*' *_seperate_* | cut -f1 | sort | uniq | wc -l 
+grep -v '*' *_competetive_* | cut -f1 | sort | uniq | wc -l 
 
-grep -v '*' Orangutan_competetive_N200.tsv | cut -f1 | sort | uniq | wc -l 
+cat  ${mm_parameters}_diff.tsv  | cut -f1 | sort | uniq | wc -l 
 
-grep -v '*' Orangutan_seperate_N200.tsv | cut -f1 | sort | uniq | wc -l 
-
-grep -v '*' Atlantic_seperate_N200.tsv | cut -f1 | sort | uniq | wc -l 
-
-
-cat  RIL_updated_P_diff.tsv  | cut -f1 | sort | uniq | wc -l
+cat  *read_diff.tsv  | cut -f1 | sort | uniq | wc -l
