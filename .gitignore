@@ -11,3 +11,8 @@ out_ms
 *pdf
 *tsv
 *csv
+*png
+*.html
+gff*
+*pid
+*nextflow*
