@@ -33,6 +33,7 @@ params.paf_compare = "${baseDir}/out_ms/paf_compare"
 params.blast_out = "${baseDir}/out_ms/blast_out"
 params.multimappers = "${baseDir}/out_ms/mapping_comparison_mm_blast"
 params.plot = "${baseDir}/out_ms/scatter_plots"
+params.plot_mapq = "${baseDir}/out_ms/mapq_filter_scatter_plots"
 params.barplot = "${baseDir}/out_ms/bar_plots"
 params.stats = "${baseDir}/out_ms/mapping_stats"
 params.length_plot = "${baseDir}/out_ms/length_bias"
@@ -101,6 +102,7 @@ include {MINIMAP2} from "./modules/minimap2"
 include {PAF_TSV} from "./modules/paf_to_tsv"
 include {STATS} from "./modules/mapping_stats"
 include {PLOT} from "./modules/plot"
+include {PLOT_MAPQ_FILTER} from "./modules/plot_mapq_filter"
 include {BARPLOT} from "./modules/barplot"
 include {PAF_COMPARISON} from "./modules/compare_pafs"
 include {BLAST_DB; BLASTN} from "./modules/blastn"
@@ -117,9 +119,9 @@ include {LENGTHBIAS} from "./modules/lengthbias"
 */
 
 workflow {
-   // mm_paramers = Channel.from("-N 200", "-P")
-   mm_paramers = Channel.from("-N 200", "-P", "-P -f 0.000002")
-   //mm_paramers = Channel.from("-N 200")
+   mm_paramers = Channel.from("-N 200", "-P")
+   // mm_paramers = Channel.from("-N 200", "-P", "-P -f 0.000002")
+   // mm_paramers = Channel.from("-N 200")
    minimap_out = MINIMAP2(samples_mapping_ch.combine(mm_paramers))
    minimap_out.transpose().view()
    // get mapping stats
@@ -144,6 +146,8 @@ workflow {
     minimap_out_grouped.view()
     // plot mapping strategy comparison
     PLOT(minimap_out_grouped)
+    // plot mapq filter comparison
+    PLOT_MAPQ_FILTER(minimap_out_grouped)
     // plot barplot for ASE count distribution
     BARPLOT(minimap_out_grouped)
 

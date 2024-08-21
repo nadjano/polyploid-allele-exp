@@ -127,11 +127,36 @@ def check_same_values(value):
             return False
         return len(set(parts)) == 1
 
-def join_dfs(dataframes, type, output_prefix):
-        # Ensure 'mapping_location' column in both dataframes is not a list
+
+def filter_unique_with_lowmapQ(df1):
+    # Clean the 'mapq' column by removing invalid values
+    df1['mapq'] = df1['mapq'].apply(lambda x: x.split(',')[0] if isinstance(x, str) and ',' in x else x)
     
+    # Convert 'mapq' to numeric, forcing errors to NaN
+    df1['mapq'] = pd.to_numeric(df1['mapq'], errors='coerce')
+    print(df1['mapq'])
+    # Drop rows where 'mapq' is NaN
+    df1 = df1.dropna(subset=['mapq'])
+    
+    # Convert 'mapq' to int
+    df1['mapq'] = df1['mapq'].astype(int)
+    
+    # Define the filter condition
+    condition = lambda df: ~((df['mapping_category'].str.contains('unique')) & (df['mapq'] < 10))
+    
+    # Apply the filter to the dataframe
+    print('filtering')
+    print(df1)
+    df1_filtered = df1[condition(df1)]
+    print(df1_filtered)
+    return df1_filtered
+
+def join_dfs(dataframes, type, output_prefix):
+    # Ensure 'mapping_location' column in both dataframes is not a list
+
     merged = pd.merge(dataframes[0], dataframes[1], on=['mapping_location', 'mapping_category'], suffixes=('_seperate', '_competetive'), how= type)
 
+    
     # print the rows where the count is different
     diff = merged[merged['count_seperate'] != merged['count_competetive']]
     # Save to file
@@ -182,7 +207,8 @@ def add_mapq_flag(pivoted_df):
 def get_mapping_cat_per_gene(df):
     # Split the 'mapping_location' column on commas to create a list
     df['mapping_location'] = df['mapping_location'].str.split(',')
-
+    # Filter both dataframes that if the mapping category contains unique and mapq is below 1o then remove the row
+    df = filter_unique_with_lowmapQ(df)
     # Use explode to create a new row for each mapping location
     unpivoted_df = df.explode('mapping_location')
 
