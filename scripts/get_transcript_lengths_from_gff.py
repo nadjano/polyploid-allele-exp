@@ -233,4 +233,3 @@ if __name__ == "__main__":
     main()
 
 
-# python /blue/mcintyre/share/potato_ASE/nf-ASE-mapping-comparison/scripts/get_transcript_lengths_from_gff.py /blue/mcintyre/share/potato_ASE/spuddb_reference_data/ATL_v3.hc_gene_models_syntIDs.repr.gff3 Atlantic 

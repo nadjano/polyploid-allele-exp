@@ -342,9 +342,9 @@ def boxplot1(df, output_prefix):
 
 def get_gff_file(output_prefix):
     if 'Atlantic' in output_prefix:
-        return '/blue/mcintyre/share/potato_ASE/spuddb_reference_data/ATL_v3.hc_gene_models_syntIDs.repr.gff3'
+        return '${PWD}/spuddb_reference_data/ATL_v3.hc_gene_models_syntIDs.repr.gff3'
     if 'Orang' in output_prefix:
-        return '/blue/mcintyre/share/potato_ASE/orang_utan_references/AG06213_PAB.hap1.hap2.refseq.liftoff.v2_only_gene.gff'
+        return '${PWD}/orang_utan_references/AG06213_PAB.hap1.hap2.refseq.liftoff.v2_only_gene.gff'
 
 def load_data(paf, output_prefix):
     if paf.endswith('.paf'):
