@@ -16,3 +16,5 @@ out_ms
 gff*
 *pid
 *nextflow*
+report.html
+*pdf

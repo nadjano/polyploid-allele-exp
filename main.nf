@@ -16,7 +16,7 @@ Input Directories
 
 */
 
-params.projectdir="/blue/mcintyre/share/potato_ASE/" 
+params.projectdir="$PWD"
 params.designfile = "${params.projectdir}/design_file/nf_mapping_comparison_samples_test.csv"
 params.ref_dir="${baseDir}/hap_genomes"
 params.fastq_dir="${baseDir}/fastq_reads"
