@@ -3,6 +3,7 @@ import argparse
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import os
 
 
 def add_haplotype_info(df, output_prefix):
@@ -11,7 +12,7 @@ def add_haplotype_info(df, output_prefix):
     if 'RIL' in output_prefix:
         df['haplotype'] = df['mapping_location'].str.split('_').str[0]
     if 'Atlantic' in output_prefix:
-        pattern = r'(\dG)'
+        pattern = r'(hap\d)'
         df['haplotype'] = df['mapping_location'].str.extract(pattern)
         print(df['haplotype'])
     if 'Orang' in output_prefix:
@@ -32,7 +33,7 @@ def add_gene_info(df, output_prefix):
 
 def get_transcript_lengths(gff_file, output_prefix):
     # Create a database from the GFF file
-    db = gffutils.create_db(gff_file, dbfn='gff.db', force=True, keep_order=True,
+    db = gffutils.create_db(gff_file, dbfn='gff.db', force=True, keep_order=True, disable_infer_transcripts=True,
                             merge_strategy='merge', sort_attribute_values=True)
 
     # Initialize an empty dictionary to store transcript lengths
@@ -62,7 +63,11 @@ def get_transcript_lengths(gff_file, output_prefix):
 
 def get_transcript_lengths(gff_file, output_prefix):
     # Create a database from the GFF file
-    db = gffutils.create_db(gff_file, dbfn='gff.db', force=True, keep_order=True,
+    if 'gff.db' in os.listdir():
+        # loaf the database
+        db = gffutils.FeatureDB('gff.db')
+    else:
+        db = gffutils.create_db(gff_file, dbfn='gff.db', force=True, keep_order=True, disable_infer_transcripts=True,
                             merge_strategy='merge', sort_attribute_values=True)
 
     # Initialize an empty dictionary to store transcript lengths
@@ -71,19 +76,19 @@ def get_transcript_lengths(gff_file, output_prefix):
     # Iterate over all features of type 'exon' in the GFF file
     for exon in db.features_of_type('exon'):
 
-        parent_id = exon.attributes['Parent'][0]
-        print(parent_id )
+        parent_id = exon.attributes['transcript_id'][0]
+
         length = exon.end - exon.start + 1
-        print(length)
+
         if parent_id not in transcript_lengths:
             transcript_lengths[parent_id] = 0
 
         transcript_lengths[parent_id] += length
-    print(transcript_lengths)
+    #print(transcript_lengths)
 
     # Filter based on output_prefix if necessary
     if 'Atlantic' in output_prefix:
-        transcript_lengths = {k: v for k, v in transcript_lengths.items() if 'Synt' in k and 'x4' in k}
+        transcript_lengths = {k: v for k, v in transcript_lengths.items() if 'Synt' in k and '4x' in k}
     elif 'Orang' in output_prefix:
         pass  # No additional filtering needed for 'Orang'
 
@@ -106,7 +111,7 @@ def add_length_category(df, output_prefix):
     # Select only the relevant columns
     print(df)
     if 'Atlantic' in output_prefix:
-        df_subset = df[['ref_length_1G', 'ref_length_2G', 'ref_length_3G', 'ref_length_4G']]
+        df_subset = df[['ref_length_1hap', 'ref_length_2hap', 'ref_length_3hap', 'ref_length_4hap']]
     if 'Orang' in output_prefix:
         df_subset = df[['ref_length_hap1', 'ref_length_hap2']]
     df_subset = df_subset.astype(int)

@@ -1,0 +1,1 @@
+python /scratch/nadjafn/Atlantic_ASE/scripts/check_length_different_between_syntelogs.py work/65/b08c6d42ba4963adfdc53eb6adbf70/updated_v62Atl_liftoff_a0.9s0.9_ALL.gtf Atlantic

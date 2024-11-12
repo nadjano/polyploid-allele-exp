@@ -1,0 +1,23 @@
+{
+  "discard_table": {
+    "discard_3p": 0,
+    "discard_5p": 0,
+    "discard_aln_frac": 1424191,
+    "discard_aln_len": 0,
+    "discard_ori": 2297703,
+    "discard_score": 50,
+    "discard_supp": 15666,
+    "valid_best_aln": 549502
+  },
+  "filter_options": {
+    "allow_rc": false,
+    "five_prime_clip": 4294967295,
+    "min_aligned_fraction": 0.5,
+    "min_aligned_len": 50,
+    "model_coverage": false,
+    "score_threshold": 0.949999988079071,
+    "three_prime_clip": 4294967295
+  },
+  "num_bins": 10,
+  "prob_model": "no_coverage"
+}
