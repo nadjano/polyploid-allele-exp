@@ -37,23 +37,12 @@ Include Modules
 =================================================================================================
 */
 include {MINIMAP2} from "./modules/minimap2"
-include {PAF_TSV} from "./modules/paf_to_tsv"
-include {STATS} from "./modules/mapping_stats"
-include {PLOT} from "./modules/plot"
-include {PLOT_MAPQ_FILTER} from "./modules/plot_mapq_filter"
-include {BARPLOT} from "./modules/barplot"
-include {PAF_COMPARISON} from "./modules/compare_pafs"
-include {BLAST_DB; BLASTN} from "./modules/blastn"
-include {MULTIMAPPERS} from "./modules/multimappers"
-include {CONCAT} from "./modules/concat_samples_for_experiment"
-include {LENGTHBIAS} from "./modules/lengthbias"
 include {GFFREAD} from "./modules/nf-core/gffread"
 include {MINIMAP2_ALIGN} from "./modules/nf-core/minimap/align"
 include {OARFISH} from "./modules/oarfish"
 include {BAM2COUNTS} from "./modules/bam2counts"
 include {MERGE_COUNTS} from "./modules/mergeCounts"
-
-
+include {ALLELEFINDER} from "./modules/local/allelefinder"
 
 
 
@@ -106,11 +95,19 @@ workflow {
     } 
     .set { ch_gtf }
 
+    reference_ch.view()
+
     reference_ch.map {
         id, fasta, gtf, ploidy -> 
         fasta
     } 
     .set { ch_fasta }
+
+    reference_ch.map {
+        id, fasta, gtf, ploidy -> 
+        tuple(id, fasta, gtf)
+    } 
+    .set { ch_fasta_gtf }
 
 
     samples_ch
@@ -122,27 +119,25 @@ workflow {
 
     ch_fastq_reads.view()
 
-    reference_ch.map {
-        id, fasta, gtf, ploidy -> fasta
- 
-    } 
-    .set { ch_fasta }
 
     // ectract gene regions
     gffread_ch = GFFREAD(ch_gtf, ch_fasta)
 
+    ch_fasta_gtf.join(gffread_ch.gffread_fasta).view()
+    ALLELEFINDER(ch_fasta_gtf.join(gffread_ch.gffread_fasta))
+
     // QC for syntelog reference gene lengths
     //ch_gene_lengths = REFERENCE_LENGTHPLOT(gffread_ch.gffread_fasta)
 
-    // map reads to reference
-    ch_alignment = MINIMAP2_ALIGN(ch_fastq_reads.combine(gffread_ch.gffread_fasta),
-            Channel.value(false),
-            Channel.value("bai"),
-            Channel.value(false),
-            Channel.value(false))
+    // // map reads to reference
+    // ch_alignment = MINIMAP2_ALIGN(ch_fastq_reads.combine(gffread_ch.gffread_fasta),
+    //         Channel.value(false),
+    //         Channel.value("bai"),
+    //         Channel.value(false),
+    //         Channel.value(false))
 
-    ch_alignment.bam.view()
-    ch_gene_counts = BAM2COUNTS(ch_alignment.bam.combine(gffread_ch.gffread_fasta), Channel.value("false"))
+    // ch_alignment.bam.view()
+    // ch_gene_counts = BAM2COUNTS(ch_alignment.bam.combine(gffread_ch.gffread_fasta), Channel.value("false"))
     // collect the gene counts for all samples
 
 
