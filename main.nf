@@ -16,11 +16,8 @@ Input Directories
 
 */
 
-
 params.designfile = "${baseDir}/assets/samples.csv"
 params.reference = "${baseDir}/assets/reference.csv"
-
-params.fastq_dir="${baseDir}/fastq_reads"
 
 /*
 =================================================================================================
@@ -43,7 +40,7 @@ include {OARFISH} from "./modules/oarfish"
 include {BAM2COUNTS} from "./modules/bam2counts"
 include {MERGE_COUNTS} from "./modules/mergeCounts"
 include {ALLELEFINDER} from "./modules/local/allelefinder"
-
+include {SED_GFF} from "./modules/local/sed_gff"
 
 
 /*
@@ -116,33 +113,31 @@ workflow {
         }
         .set { ch_fastq_reads }
 
-
     ch_fastq_reads.view()
+    // prepare gtf for gene region extraction
 
 
     // ectract gene regions
-    gffread_ch = GFFREAD(ch_gtf, ch_fasta)
+    gffread_ch = SED_GFF(ch_gtf, Channel.value("gene"))
+    gffread_ch.view()
 
-    ch_fasta_gtf.join(gffread_ch.gffread_fasta).view()
-    ALLELEFINDER(ch_fasta_gtf.join(gffread_ch.gffread_fasta))
+    gffread_ch = GFFREAD(gffread_ch, ch_fasta)
+
+    // ALLELEFINDER(ch_fasta_gtf.join(gffread_ch.gffread_fasta))
 
     // QC for syntelog reference gene lengths
     //ch_gene_lengths = REFERENCE_LENGTHPLOT(gffread_ch.gffread_fasta)
 
-    // // map reads to reference
-    // ch_alignment = MINIMAP2_ALIGN(ch_fastq_reads.combine(gffread_ch.gffread_fasta),
-    //         Channel.value(false),
-    //         Channel.value("bai"),
-    //         Channel.value(false),
-    //         Channel.value(false))
+    // map reads to reference
+    ch_alignment = MINIMAP2_ALIGN(ch_fastq_reads.combine(gffread_ch.gffread_fasta),
+             Channel.value(true),
+             Channel.value("bai"),
+             Channel.value(false),
+             Channel.value(false))
 
-    // ch_alignment.bam.view()
-    // ch_gene_counts = BAM2COUNTS(ch_alignment.bam.combine(gffread_ch.gffread_fasta), Channel.value("false"))
+    ch_alignment.bam.view()
+    ch_gene_counts = BAM2COUNTS(ch_alignment.bam.combine(gffread_ch.gffread_fasta), Channel.value("false"))
     // collect the gene counts for all samples
-
-
-
     // merged_counts = MERGE_COUNTS(ch_gene_counts.counts.groupTuple(by: 0).view(), Channel.value("true"))
 
-}   
-
+}

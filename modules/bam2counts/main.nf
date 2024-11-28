@@ -1,6 +1,5 @@
 process BAM2COUNTS {
     tag "$meta.id"
-    label 'process_high'
 
     // replace!!
     conda "/users/nadjafn/.conda/envs/nextflow"
@@ -19,14 +18,13 @@ process BAM2COUNTS {
 
     script:
 
-    def output_name = "${meta.id}.counts.tsv"
+    def output_name = "${meta.id}_${meta.condition}.counts.tsv"
     def filter = filter ? "--filter" : ""
     """
     python ${baseDir}/scripts/prefilter.py \
         --aln ${bam} \
         --target ${fasta} \
-        --out_dir filter \
-        ${filter}
+        --out_dir filter
 
     python ${baseDir}/scripts/scores_to_genecounts.py \
     --scores "filter/scores.tsv" \

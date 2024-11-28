@@ -1,0 +1,10 @@
+{
+  "aln": "results/01_MINIMAP2/SRR14993893.bam",
+  "target": "results/0_GFFREAD/Atlantic_liftoff.fasta",
+  "out_dir": "bam2counts_test/",
+  "filter": false,
+  "five_prime": 500,
+  "three_prime": 500,
+  "surrender": false,
+  "target_cover": 0.8
+}
