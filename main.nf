@@ -41,6 +41,7 @@ include {BAM2COUNTS} from "./modules/bam2counts"
 include {MERGE_COUNTS} from "./modules/mergeCounts"
 include {ALLELEFINDER} from "./modules/local/allelefinder"
 include {SED_GFF} from "./modules/local/sed_gff"
+include {BAM2STATS} from "./modules/bam2stats"
 
 
 /*
@@ -137,6 +138,7 @@ workflow {
 
     ch_alignment.bam.view()
     ch_gene_counts = BAM2COUNTS(ch_alignment.bam.combine(gffread_ch.gffread_fasta), Channel.value("false"))
+    ch_mapping_stats = BAM2STATS(ch_alignment.bam)
     // collect the gene counts for all samples
     // merged_counts = MERGE_COUNTS(ch_gene_counts.counts.groupTuple(by: 0).view(), Channel.value("true"))
 

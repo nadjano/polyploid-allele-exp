@@ -10,19 +10,24 @@ process BAM2COUNTS {
 
     output:
     tuple val(meta), path("*.tsv")                       , optional: false, emit: counts
-    tuple val(meta), path("filter/*.json")                       , optional: true, emit: json
+    tuple val(meta), path("filter/*.json")               , optional: true, emit: json
+    tuple val(meta), path("*.counts_stats.txt")   , optional: true, emit: stats
     path "versions.yml"                                  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-
+    def bam_filtered = "${meta.id}_${meta.condition}.filtered.bam"
     def output_name = "${meta.id}_${meta.condition}.counts.tsv"
     def filter = filter ? "--filter" : ""
+    def min_read_length = 300
     """
+    # remove reads with read length < min_read_length
+    samtools view -m ${min_read_length} $bam -b  > ${bam_filtered}
+
     python ${baseDir}/scripts/prefilter.py \
-        --aln ${bam} \
+        --aln ${bam_filtered} \
         --target ${fasta} \
         --out_dir filter
 

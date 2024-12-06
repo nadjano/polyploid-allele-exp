@@ -58,6 +58,19 @@ def main():
         out_file.write(f"tname\t{args.sample}_{args.condition}\n")
         for mapping_location, count in counts.items():
             out_file.write(f"{mapping_location}\t{count}\n")
+    
+    # also make stats file for number of different mapping locations, total number of reads and mulitmapping reads
+    stats_file = output_file.replace('.tsv', '_stats.txt')
+    with open(stats_file, 'w') as out_file:
+        total_mapped_reads = sum(counts.values())  # 500
+        unique_mapping_locations = len(counts)     # 5
+        multimapping_reads = (sum(count for key, count in counts.items() if "&" in key)/total_mapped_reads) * 100  # 140
+        unique_mapppeing_reads = (sum(count for key, count in counts.items() if "&" not in key)/total_mapped_reads) * 100
+        out_file.write(f"Sample\t{args.sample}_{args.condition}\n")
+        out_file.write(f"mapped_reads\t{total_mapped_reads}\n")
+        out_file.write(f"unique_mapping_locations\t{unique_mapping_locations}\n")
+        out_file.write(f"multimapping_reads %\t{multimapping_reads}\n")
+        out_file.write(f"unique_mapping_reads %\t{unique_mapppeing_reads}\n")
 
 if __name__ == "__main__":
     main()

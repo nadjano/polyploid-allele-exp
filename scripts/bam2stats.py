@@ -78,7 +78,7 @@ def main():
     # Create histograms of read lengths
     if mapped_lengths_list:
         plt.figure(figsize=(10, 6))
-        plt.hist(mapped_lengths_list, bins=50, color='blue', alpha=0.7)
+        plt.hist(mapped_lengths_list, bins=100, color='blue', alpha=0.7)
         plt.title('Histogram of Mapped Read Lengths')
         plt.xlabel('Read Length')
         plt.ylabel('Frequency')
@@ -86,7 +86,6 @@ def main():
         plt.grid(True)
         plt.savefig(f'{output_prefix}_mapped_read_lengths_histogram.png')
         plt.close()
-        print("Mapped read lengths histogram saved as 'mapped_read_lengths_histogram.png'.")
 
     # if unmapped_lengths_list:
     #     plt.figure(figsize=(10, 6))
