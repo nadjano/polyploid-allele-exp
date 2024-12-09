@@ -5963,7 +5963,8 @@ if run_mode_flag == "low_mem":
             print("sam count " + str(sam_count))
 
         read_id = line_split[0]
-        sam_flag = int(line_split[1])
+        sam_flag = 0
+        # sam_flag = int(line_split[1])
         scaff_name = line_split[2]
         start_pos = int(line_split[3])
 
