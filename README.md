@@ -1,18 +1,10 @@
-## long-read ASE
+## polyploid-allele-exp
+
+This is a nextflow pipeline for the analysis of allele-specific expression in polyplod plants using long-read RNA-seq.
+
+The minimal input for running this pipeline is:
+
+- phased genome assembly + annotation
+- long-read RNA-seq 
 
 
-Prequesites create allelefinder env
-
-
-# Install AlleleFinder
-mamba create -n allelefinder gmap blast
-conda activate allelefinder
-cd /scratch/nadjafn
-git clone https://github.com/sc-zhang/AlleleFinder.git
-chmod +x AlleleFinder/allelefinder.py
-# Optional
-echo 'export PATH=/scratch/nadjafn/AlleleFinder:$PATH' >> ~/.bash_profile
-echo 'export PATH=/scratch/nadjafn/MCScanX/MCScanX:$PATH' >> ~/.bash_profile
-source ~/.bash_profile
-
-# nf-potato-ase
