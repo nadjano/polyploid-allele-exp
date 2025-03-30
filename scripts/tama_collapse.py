@@ -6030,7 +6030,6 @@ if run_mode_flag == "low_mem":
         ##### 2020/07/27 sj hash
         #trans_obj.make_sj_hash_string()
         ##### 2020/07/27 sj hash
-        print(trans_obj)
 
         percent_coverage = trans_obj.calc_coverage()
         percent_identity = trans_obj.calc_identity()

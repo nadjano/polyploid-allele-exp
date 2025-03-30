@@ -30,3 +30,4 @@ conda activate bed2gtf
 bed2gtf --bed /scratch/nadjafn/Atlantic_ASE/nf-potato-ase/tama_test/Synt_240_.bed --output /scratch/nadjafn/Atlantic_ASE/nf-potato-ase/tama_test/Synt_240_.gtf --no-gene
 
 bed2gtf --bed /scratch/nadjafn/Atlantic_ASE/nf-potato-ase/tama_test/Synt_240_default_no_cap_long_end.bed --output /scratch/nadjafn/Atlantic_ASE/nf-potato-ase/tama_test/Synt_240_default_no_cap_long_end.gtf --no-gene
+

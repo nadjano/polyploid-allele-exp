@@ -51,7 +51,6 @@ def parse_alignments(store: InMemoryAlignmentStore, bam_file_path: str, quiet: b
                 store.inc_unique_alignments()
         
         pb.close()
-
     print(f"The alignment file contained {num_unmapped} unmapped read records.")
     print(f"Unique alignments counted: {store.unique_alignments}")
     print(f"Number of groups added to store: {len(store.groups)}")
