@@ -1,6 +1,27 @@
 import sys
 import argparse
 
+def merge_dicts_to_lists(dict1, dict2):
+    """
+    Merge two dictionaries with overlapping keys.
+    For each key in either dictionary, create a list containing values from both dictionaries.
+    If a key exists in only one dictionary, use 0 for the missing value.
+    """
+    result = {}
+    
+    # Get all unique keys from both dictionaries
+    all_keys = set(dict1.keys()) | set(dict2.keys())
+    
+    # For each key, create a list with values from both dictionaries
+    for key in all_keys:
+        value1 = dict1.get(key, 0)  # Use 0 if key not in dict1
+        value2 = dict2.get(key, 0)  # Use 0 if key not in dict2
+        result[key] = [value1, value2]
+    
+    return result
+
+
+
 def main():
     # Argument parsing setup
     parser = argparse.ArgumentParser(description="Process alignment and build compatibility matrix.")
@@ -14,6 +35,8 @@ def main():
     input_file = args.scores
     output_file = args.output
 
+    unique_counts = {}
+    multimapping_counts = {}
     counts = {}
 
     with open(input_file, 'r') as file:
@@ -49,15 +72,35 @@ def main():
             if mapping_locations:
                 # Sort mapping locations to ensure consistent combination keys
                 mapping_locations.sort()
+
+                # save the counts of the mapping locations
+
                 # Combine mapping locations into a single key
                 mapping_key = '&'.join(mapping_locations)
                 counts[mapping_key] = counts.get(mapping_key, 0) + 1
-
+                
+                # if the mapping location length is > 1 the read is mulitmapping
+                # split the mapping locations in unique and multimapping
+                if len(mapping_locations) == 1:
+                    #print(mapping_locations)
+                    # Combine mapping locations into a single key
+  
+                    mapping_key = mapping_locations[0]
+                    unique_counts[mapping_key] = unique_counts.get(mapping_key, 0) + 1
+                
+                elif len(mapping_locations) > 1:
+                    for mapping_location in mapping_locations:
+                        # Combine mapping locations into a single key
+                        mapping_key = mapping_location
+                        multimapping_counts[mapping_key] = multimapping_counts.get(mapping_key, 0) + 1
+    
+    # merge the unique and mutimapping counts to one dict
+    merged_counts = merge_dicts_to_lists(unique_counts, multimapping_counts)
     # Save the counts to the output file
     with open(output_file, 'w') as out_file:
-        out_file.write(f"tname\t{args.sample}_{args.condition}\n")
-        for mapping_location, count in counts.items():
-            out_file.write(f"{mapping_location}\t{count}\n")
+        out_file.write(f"transcript_id\tUniqueCount\tAmbigCount\n")
+        for mapping_location, count in merged_counts.items():
+            out_file.write(f"{mapping_location}\t{count[0]}\t{count[1]}\n")
     
     # also make stats file for number of different mapping locations, total number of reads and mulitmapping reads
     stats_file = output_file.replace('.tsv', '_stats.txt')
