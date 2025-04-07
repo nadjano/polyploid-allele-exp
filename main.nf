@@ -119,9 +119,9 @@ workflow {
 
 
     // some function that takes as a input the gff file and the fasta file and creates a fasta file of spliced or unspliced transcripts/features (can be CDS)
-    // for this pipeline we want to extract the unspliced CDS+150 features
+    // for this pipeline we want to extract the unspliced CDS+150 features, at the moment spliced transcripts are extracted
 
-    // extract the unspliced transcripts )
+    // extract the spliced transcripts
     gffread_ch = GFFREAD(ch_gtf, ch_fasta)
 
     // ALLELEFINDER(ch_fasta_gtf.join(gffread_ch.gffread_fasta))
